@@ -82,6 +82,7 @@ public:
     const float             mScrollAccel = 0.1f;
     float					mMaxScrollPosition;
     SeedType                mPreviousType;
+    int                     mExtraSeedSilhouetteFadeCounter;
 
 
 public:

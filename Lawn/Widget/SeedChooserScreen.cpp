@@ -52,6 +52,7 @@ SeedChooserScreen::SeedChooserScreen()
 	mToolTipSeed = -1;
 	mScrollAmount = 0;
 	mScrollPosition = 0;
+	mExtraSeedSilhouetteFadeCounter = 0; 
 
 	mStartButton = new GameButton(SeedChooserScreen::SeedChooserScreen_Start);
 	mStartButton->mLabel = _S("[LETS_ROCK_BUTTON]");
@@ -399,31 +400,32 @@ void SeedChooserScreen::Draw(Graphics* g)
 
 	TodDrawString(g, _S("[CHOOSE_YOUR_PLANTS]"), 229, 110 + aChooserTopPadding, Sexy::FONT_DWARVENTODCRAFT18YELLOW, Color::White, DS_ALIGN_CENTER);
 	mSlider->SliderDraw(g);
-	if (!mBoard->HasConveyorBeltSeedBank() && mBoard->mCutScene && mBoard->mCutScene->mSeedChoosing)
-	{
-		//mBoard->mSeedBank->UpdateExtraImageAnimation();
-		//int aExtraWidth = mBoard->GetSeedBankExtraWidth();
-		//Rect aSrcRectExtra(IMAGE_SEEDBANK->mWidth - aExtraWidth - 12, 0, aExtraWidth + 12, IMAGE_SEEDBANK->mHeight);
-		//int aSeedBankX = mBoard->mSeedBank->mX - mX;
-		//int aSeedBankY = mBoard->mSeedBank->mY - mY;
-		//int aExtraImageY = FloatRoundToInt(mBoard->mSeedBank->mExtraImageOffset);
-		//g->DrawImage(IMAGE_SEEDBANK, aSeedBankX, aSeedBankY + aExtraImageY);
-		//g->DrawImage(IMAGE_SEEDBANK, aSeedBankX + IMAGE_SEEDBANK->mWidth - 12, aSeedBankY + aExtraImageY, aSrcRectExtra);
-		mBoard->mSeedBank->UpdateExtraImageAnimation();
-		int aSeedBankY = mBoard->mSeedBank->mY - mY;
-		int aExtraImageY = FloatRoundToInt(mBoard->mSeedBank->mExtraImageOffset);
+	//if (!mBoard->HasConveyorBeltSeedBank() && mBoard->mCutScene && mBoard->mCutScene->mSeedChoosing)
+	//{
+	//	//mBoard->mSeedBank->UpdateExtraImageAnimation();
+	//	//int aExtraWidth = mBoard->GetSeedBankExtraWidth();
+	//	//Rect aSrcRectExtra(IMAGE_SEEDBANK->mWidth - aExtraWidth - 12, 0, aExtraWidth + 12, IMAGE_SEEDBANK->mHeight);
+	//	//int aSeedBankX = mBoard->mSeedBank->mX - mX;
+	//	//int aSeedBankY = mBoard->mSeedBank->mY - mY;
+	//	//int aExtraImageY = FloatRoundToInt(mBoard->mSeedBank->mExtraImageOffset);
+	//	//g->DrawImage(IMAGE_SEEDBANK, aSeedBankX, aSeedBankY + aExtraImageY);
+	//	//g->DrawImage(IMAGE_SEEDBANK, aSeedBankX + IMAGE_SEEDBANK->mWidth - 12, aSeedBankY + aExtraImageY, aSrcRectExtra);
+	//	mBoard->mSeedBank->UpdateExtraImageAnimation();
+	//	int aSeedBankY = mBoard->mSeedBank->mY - mY;
+	//	int aExtraImageY = FloatRoundToInt(mBoard->mSeedBank->mExtraImageOffset);
 
-		int aImageWidth = IMAGE_SEEDBANK->GetWidth();
-		int aImageHeight = IMAGE_SEEDBANK->GetHeight();
-		int aHalfWidth = aImageWidth / 2;
+	//	int aImageWidth = IMAGE_SEEDBANK->GetWidth();
+	//	int aImageHeight = IMAGE_SEEDBANK->GetHeight();
+	//	const int aLeftHalfStartX = 68;
+	//	const int aRightHalfEndX = 600;
+	//	int aSymmetricHalfWidth = (aRightHalfEndX - aLeftHalfStartX + 1) / 2;
+	//	aSymmetricHalfWidth = min(aSymmetricHalfWidth, aImageWidth);
 
-		// Right half source rect
-		Rect aRightHalfSrcRect(aHalfWidth, 0, aHalfWidth, aImageHeight);
+	//	Rect aRightHalfSrcRect(aImageWidth - aSymmetricHalfWidth, 0, aSymmetricHalfWidth, aImageHeight);
 
-
-		// Draw right half normally on the right (x=400 to x=600)
-		g->DrawImage(IMAGE_SEEDBANK, 600 - aHalfWidth, aSeedBankY + aExtraImageY, aRightHalfSrcRect);
-	}
+	//	g->DrawImage(IMAGE_SEEDBANK, aRightHalfEndX - aSymmetricHalfWidth, aSeedBankY + aExtraImageY, aRightHalfSrcRect);
+	//	g->DrawImageMirror(IMAGE_SEEDBANK, aLeftHalfStartX, aSeedBankY + aExtraImageY, aRightHalfSrcRect, true);
+	//}
 	for (SeedType aSeedType = SEED_PEASHOOTER; aSeedType < NUM_SEEDS_IN_CHOOSER; aSeedType = (SeedType)(aSeedType + 1))
 	{
 		if (aSeedType != SEED_IMITATER)
@@ -494,13 +496,44 @@ void SeedChooserScreen::Draw(Graphics* g)
 	}
 
 	int aNumSeedsInBank = mBoard->mSeedBank->mNumPackets;
+	constexpr int EXTRA_SEEDBANK_BASE_SLOTS = 10;
+	constexpr int EXTRA_SEEDBANK_SLIDE_TIME = 40;
+	constexpr int EXTRA_SILHOUETTE_FADE_TIME = 20;
+	int aChosenSeedsCount = CountChosenSeedsInChooser();
+	if (aChosenSeedsCount > EXTRA_SEEDBANK_BASE_SLOTS)
+	{
+		if (mBoard->mSeedBank->mExtraImageAnimationCounter >= EXTRA_SEEDBANK_SLIDE_TIME)
+			mExtraSeedSilhouetteFadeCounter = min(mExtraSeedSilhouetteFadeCounter + 1, EXTRA_SILHOUETTE_FADE_TIME);
+		else
+			mExtraSeedSilhouetteFadeCounter = 0;
+	}
+	else if (mBoard->mSeedBank->mSlidingAnimationDelay > 0)
+	{
+		mExtraSeedSilhouetteFadeCounter = max(mExtraSeedSilhouetteFadeCounter - 1, 0);
+	}
+	else
+	{
+		mExtraSeedSilhouetteFadeCounter = 0;
+	}
+	int aExtraSilhouetteAlpha = TodAnimateCurve(0, EXTRA_SILHOUETTE_FADE_TIME, mExtraSeedSilhouetteFadeCounter, 0, 255, TodCurves::CURVE_LINEAR);
 	for (int anIndex = 0; anIndex < aNumSeedsInBank; anIndex++)
 	{
 		if (FindSeedInBank(anIndex) == SEED_NONE)
 		{
 			int x, y;
 			GetSeedPositionInBank(anIndex, x, y);
-			g->DrawImage(Sexy::IMAGE_SEEDPACKETSILHOUETTE, x, y);
+			if (anIndex >= EXTRA_SEEDBANK_BASE_SLOTS)
+			{
+				g->SetColorizeImages(true);
+				g->SetColor(Color(255, 255, 255, aExtraSilhouetteAlpha));
+				g->DrawImage(Sexy::IMAGE_SEEDPACKETSILHOUETTE, x, y);
+				g->SetColorizeImages(false);
+				g->SetColor(Color::White);
+			}
+			else
+			{
+				g->DrawImage(Sexy::IMAGE_SEEDPACKETSILHOUETTE, x, y);
+			}
 		}
 	}
 
@@ -699,9 +732,17 @@ void SeedChooserScreen::MouseWheel(int theDelta)
 	if (mChooseState != CHOOSE_NORMAL) return;
 
 	int aChooserTopPadding = GetChooserTopPaddingForSeedBank(this);
+	int aBaseClipHeight = 420 + SEED_CHOOSER_EXTRA_HEIGHT;
+	int aCurrentClipHeight = aBaseClipHeight - aChooserTopPadding;
+	int aSeedChooserContentHeight = (((NUM_SEEDS_IN_CHOOSER - 2) / cSeedPacketRows) * (SEED_PACKET_HEIGHT + cSeedPacketYOffset)) + SEED_PACKET_HEIGHT;
+	int aBaseMaxScroll = max(0, aSeedChooserContentHeight - aBaseClipHeight);
+	int aCurrentMaxScroll = max(0, aSeedChooserContentHeight - aCurrentClipHeight);
 
-	float aScrollSpeedMultiplier = (cSeedClipRect.mHeight > 0) ?
-		(float)(420 + SEED_CHOOSER_EXTRA_HEIGHT) / (float)cSeedClipRect.mHeight * 1.25f : 1.0f;
+	float aScrollSpeedMultiplier = 1.0f;
+	if (aChooserTopPadding > 0 && aBaseMaxScroll > 0)
+	{
+		aScrollSpeedMultiplier = (float)aCurrentMaxScroll / (float)aBaseMaxScroll;
+	}
 
 	mScrollAmount -= (mBaseScrollSpeed * aScrollSpeedMultiplier) * theDelta;
 	mScrollAmount -= mScrollAmount * mScrollAccel;

@@ -1001,9 +1001,18 @@ void SeedBank::UpdateExtraImageAnimation()
 		aChosenSeedsCount = mApp->mSeedChooserScreen->CountChosenSeedsInChooser();
 	}
 
-	if (aChosenSeedsCount < mLastChosenSeedCount)
+	bool aIsSeedChooserPhase = mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO && mApp->mSeedChooserScreen && mBoard->mCutScene && mBoard->mCutScene->mSeedChoosing;
+	bool aIsSurvivalRepick = aIsSeedChooserPhase && mBoard->mCutScene->IsSurvivalRepick();
+
+	bool aCrossedBelowExtraSeedThreshold = mLastChosenSeedCount > 10 && aChosenSeedsCount <= 10;
+	bool aExtraSeedBankFullyExtended = mExtraImageAnimationCounter >= ANIMATION_TIME;
+	if (aCrossedBelowExtraSeedThreshold && aExtraSeedBankFullyExtended && !aIsSurvivalRepick)
 	{
 		mSlidingAnimationDelay = SLIDING_DELAY;
+	}
+	if (aIsSurvivalRepick && aChosenSeedsCount <= 10)
+	{
+		mSlidingAnimationDelay = 0;
 	}
 	mLastChosenSeedCount = aChosenSeedsCount;
 
@@ -1054,8 +1063,8 @@ void SeedBank::Draw(Graphics* g)
 		Rect theSrcRect(IMAGE_SEEDBANK->mWidth - aExtraWidth - 12, 0, aExtraWidth + 12, IMAGE_SEEDBANK->mHeight);
 		Rect theSrcRectExtra(IMAGE_SEEDBANK->mWidth - aExtraWidth - 12, 0, aExtraWidth + 12, IMAGE_SEEDBANK->mHeight);
 
-		bool aDrawExtraSeedBankInBoardLayer = !(mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO && mApp->mSeedChooserScreen && mBoard->mCutScene && mBoard->mCutScene->mSeedChoosing);
-
+		//bool aDrawExtraSeedBankInBoardLayer = !(mApp->mGameScene == GameScenes::SCENE_LEVEL_INTRO && mApp->mSeedChooserScreen && mBoard->mCutScene && mBoard->mCutScene->mSeedChoosing);
+		bool aDrawExtraSeedBankInBoardLayer = true;
 		if (aDrawExtraSeedBankInBoardLayer)
 		{
 			//int aExtraImageY = FloatRoundToInt(mExtraImageOffset);
@@ -1066,14 +1075,15 @@ void SeedBank::Draw(Graphics* g)
 
 			int aImageWidth = IMAGE_SEEDBANK->GetWidth();
 			int aImageHeight = IMAGE_SEEDBANK->GetHeight();
-			int aHalfWidth = aImageWidth / 2;
+			const int aLeftHalfStartX = 68;
+			const int aRightHalfEndX = 600;
+			int aSymmetricHalfWidth = (aRightHalfEndX - aLeftHalfStartX + 1) / 2;
+			aSymmetricHalfWidth = min(aSymmetricHalfWidth, aImageWidth);
 
-			// Right half source rect
-			Rect aRightHalfSrcRect(aHalfWidth, 0, aHalfWidth, aImageHeight);
+			Rect aRightHalfSrcRect(aImageWidth - aSymmetricHalfWidth, 0, aSymmetricHalfWidth, aImageHeight);
 
-
-			// Draw right half normally on the right (x=400 to x=600)
-			g->DrawImage(IMAGE_SEEDBANK, 600 - aHalfWidth, aSeedBankY + aExtraImageY, aRightHalfSrcRect);
+			g->DrawImage(IMAGE_SEEDBANK, aRightHalfEndX - aSymmetricHalfWidth, aSeedBankY + aExtraImageY, aRightHalfSrcRect);
+			g->DrawImageMirror(IMAGE_SEEDBANK, aLeftHalfStartX, aSeedBankY + aExtraImageY, aRightHalfSrcRect, true);
 		}
 		g->DrawImage(IMAGE_SEEDBANK, 0, 0);
 		g->DrawImage(IMAGE_SEEDBANK, IMAGE_SEEDBANK->mWidth - 12, 0, theSrcRect);

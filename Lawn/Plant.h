@@ -210,6 +210,7 @@ public:
     int                     mSide;
     int                     mSpeedCounter;
     Plant*                  mGraveBusterGetPlant;
+    PlantID                 mGraveBusterGetPlantNEW;
     SeedType                mGraveBusterGetPlantSeedType;
 
 public:

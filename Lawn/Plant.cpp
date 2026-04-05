@@ -308,6 +308,7 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
         mY = mBoard->GridToPixelY(theGridX, theGridY);
     }
     mGraveBusterGetPlant = nullptr;
+    mGraveBusterGetPlantNEW = PlantID::PLANTID_NULL;
     mGraveBusterGetPlantSeedType = SeedType::SEED_NONE;
     mAnimCounter = 0;
     mAnimPing = true;
@@ -597,13 +598,15 @@ void Plant::PlantInitialize(int theGridX, int theGridY, SeedType theSeedType, Se
             if (mSide == 1)
             {
                 //mState = PlantState::STATE_GRAVEBUSTER_EATING;
-                mGraveBusterGetPlant = mBoard->GetTopPlantAt(mPlantCol, mRow, PlantPriority::TOPPLANT_EATING_ORDER);
-                mGraveBusterGetPlantSeedType = mGraveBusterGetPlant->mSeedType;
-                if (mGraveBusterGetPlant->mSeedType == SeedType::SEED_FLOWERPOT)
+                //mGraveBusterGetPlant = mBoard->GetTopPlantAt(mPlantCol, mRow, PlantPriority::TOPPLANT_EATING_ORDER);
+                mGraveBusterGetPlantNEW = (PlantID)mBoard->mPlants.DataArrayGetID(mBoard->GetTopPlantAt(mPlantCol, mRow, PlantPriority::TOPPLANT_EATING_ORDER));
+                //mGraveBusterGetPlantSeedType = mGraveBusterGetPlant->mSeedType;
+                mGraveBusterGetPlantSeedType = mBoard->mPlants.DataArrayTryToGet(mGraveBusterGetPlantNEW)->mSeedType;
+                if (mGraveBusterGetPlantSeedType == SeedType::SEED_FLOWERPOT)
                 {
                     mY += 30;
                 }
-                if (mGraveBusterGetPlant->mSeedType == SeedType::SEED_PUMPKINSHELL)
+                if (mGraveBusterGetPlantSeedType == SeedType::SEED_PUMPKINSHELL)
                 {
                     mY += 10;
                 }
@@ -1723,19 +1726,24 @@ void Plant::UpdateGraveBuster()
             //        Die();
             //    }
             //}
-            if (mGraveBusterGetPlant)
+            //if (mGraveBusterGetPlant)
+            if (mBoard->mPlants.DataArrayTryToGet(mGraveBusterGetPlantNEW))
             {
-                if (mGraveBusterGetPlant->mSquished)
-                {
-                    mGraveBusterGetPlant->Die();
-                }
-                if ((mGraveBusterGetPlant->mDead) && mBoard->CanPlantAt(mPlantCol, mRow, mGraveBusterGetPlantSeedType) == PLANTING_OK)
+                //if (mBoard->mPlants.DataArrayTryToGet(mGraveBusterGetPlantNEW)->mSquished)
+                //{
+                //    mBoard->mPlants.DataArrayTryToGet(mGraveBusterGetPlantNEW)->Squish();
+                //}
+            }
+            else
+            {
+                if (mBoard->CanPlantAt(mPlantCol, mRow, mGraveBusterGetPlantSeedType) == PLANTING_OK)
                 {
                     mBoard->AddPlant(mPlantCol, mRow, mGraveBusterGetPlantSeedType, SeedType::SEED_NONE);
                     TodParticleSystem* aParticleSystem = mApp->AddTodParticle(mX + 40, mY + 40, (int)RenderLayer::RENDER_LAYER_TOP, ParticleEffect::PARTICLE_IMITATER_MORPH);
 
                     Die();
                 }
+
             }
         }
         else
@@ -1756,16 +1764,17 @@ void Plant::UpdateGraveBuster()
     {
         if (mSide == 1)
         {
-            if (mGraveBusterGetPlant)
+            if (mBoard->mPlants.DataArrayTryToGet(mGraveBusterGetPlantNEW))
             {
-                if (mGraveBusterGetPlant->mSquished)
+                if (mBoard->mPlants.DataArrayTryToGet(mGraveBusterGetPlantNEW)->mSquished)
                 {
                     Squish();
                 }
-                if (mGraveBusterGetPlant->mDead)
-                {
-                    Die();
-                }
+            }
+            else
+            {
+                Die();
+
             }
         }
     }
@@ -6913,7 +6922,7 @@ int Plant::GetRefreshTime(SeedType theSeedType, SeedType theImitaterType)
     else if (aActualType == SeedType::SEED_POTATOMINE && GetPlantSide(aActualType) == 1)
         return 4000;
     else if (aActualType == SeedType::SEED_INSTANT_COFFEE && GetPlantSide(aActualType) == 1)
-        return 1500;
+        return 2500;
     return aPlantDef.mRefreshTime;
     //if (theSeedType == SeedType::SEED_IMITATER && theImitaterType != SeedType::SEED_NONE)
     //{

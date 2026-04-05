@@ -768,8 +768,9 @@ void Coin::Update()
             aMouseX >= mPosX - 150 &&
             aMouseX < mPosX + mWidth + 150 &&
             aMouseY >= mPosY - 150 &&
-            aMouseY < mPosY + mHeight + 150 &&
-            (mCoinMotion == CoinMotion::COIN_MOTION_FROM_SKY || mCoinMotion == CoinMotion::COIN_MOTION_FROM_SKY_SLOW))
+            aMouseY < mPosY + mHeight + 150
+            && (mCoinMotion == CoinMotion::COIN_MOTION_FROM_SKY || mCoinMotion == CoinMotion::COIN_MOTION_FROM_SKY_SLOW)
+            )
         {
             SexyVector2 aDestPos(aMouseX + mX, aMouseY + mY);
             SexyVector2 aSrcPos(mPosX, mPosY);
